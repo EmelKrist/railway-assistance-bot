@@ -11,9 +11,9 @@
 	</parent>
 
 	<groupId>ru.emelkrist</groupId>
-	<artifactId>railway_assistance_bot</artifactId>
+	<artifactId>railway-assistance-bot</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>railway_assistance_bot</name>
+	<name>railway-assistance-bot</name>
 	<description>Railway assistance telegram bot</description>
 
 	<properties>
