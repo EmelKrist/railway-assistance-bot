@@ -1,5 +1,6 @@
 package ru.emelkrist.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -10,6 +11,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.emelkrist.config.BotConfig;
 
 @Component
+@Slf4j
 public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig config;
 
@@ -61,7 +63,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             execute(message);
         } catch (TelegramApiException e) {
-            System.out.println(("Error: " + e.getMessage()));
+            log.error("Error: " + e.getMessage());
         }
     }
 

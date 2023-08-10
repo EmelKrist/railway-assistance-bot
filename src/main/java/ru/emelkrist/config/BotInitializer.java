@@ -1,5 +1,6 @@
 package ru.emelkrist.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
@@ -10,6 +11,7 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import ru.emelkrist.service.TelegramBot;
 
 @Component
+@Slf4j
 public class BotInitializer {
 
     @Autowired
@@ -22,7 +24,7 @@ public class BotInitializer {
         try {
             telegramBotsApi.registerBot(bot);
         } catch (TelegramApiException e) {
-            System.out.println(("Error: " + e.getMessage()));
+            log.error("Error: " + e.getMessage());
         }
     }
 }

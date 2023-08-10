@@ -20,3 +20,4 @@ target/
 
 ### Project data security ###
 src/main/resources/application.properties
+logs
