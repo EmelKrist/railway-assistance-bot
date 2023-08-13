@@ -7,10 +7,13 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.emelkrist.controller.TelegramBot;
 import ru.emelkrist.model.RequestData;
 import ru.emelkrist.service.enums.Command;
+import ru.emelkrist.service.enums.ChatMessage;
 import ru.emelkrist.service.enums.Question;
 import ru.emelkrist.utils.MessageUtils;
 
 import java.util.concurrent.ConcurrentHashMap;
+
+import static ru.emelkrist.service.enums.ChatMessage.*;
 
 @Controller
 @Slf4j
@@ -71,19 +74,10 @@ public class UpdateProcessor {
 
         if (command != null) {
             switch (command) {
-                case START -> {
-                    // TODO если пользователь новый, добавить его в БД
-                    setCommandStartView(chatId);
-                }
-                case HELP -> {
-                    setCommandHelpView(chatId);
-                }
-                case TIMETABLE -> {
-                    processStartTimetable(userId, chatId);
-                }
-                case CANCEL -> {
-                    processCancel(userId, chatId);
-                }
+                case START -> processStart(chatId);
+                case HELP -> processHelp(chatId);
+                case TIMETABLE -> processStartTimetable(userId, chatId);
+                case CANCEL -> processCancel(userId, chatId);
             }
         } else if (request != null && request.isInputting()) {
             processTimetableInputData(text, userId, chatId);
@@ -106,17 +100,11 @@ public class UpdateProcessor {
         Question question = Question.values()[current];
 
         if (question.equals(Question.FROM)) {
-            // TODO получение кода города и проверка ввода на корректность
-            request.setFrom(text);
-            setToQuestionView(chatId);
+            processFromAnswer(request, text, chatId);
         } else if (question.equals(Question.TO)) {
-            // TODO получение кода города и проверка ввода на корректность
-            request.setTo(text);
-            setDateQuestionView(chatId);
+            processToAnswer(request, text, chatId);
         } else if (question.equals(Question.DATE)) {
-            // TODO добавить возможность указывать или не указывать дату
-            // TODO проверка даты на корректность
-            request.setDate(text);
+            processDateAnswer(request, text);
         }
         current++;
         request.setCurrent(current);
@@ -130,28 +118,61 @@ public class UpdateProcessor {
     }
 
     /**
-     * Method for setting the view for the question to get the departure date.
+     * Method for processing the answer to the question to get the departure city.
      *
-     * @param chatId identifier of chat
+     * @param request request data
+     * @param text    text of question's answer
+     * @param chatId  identifier of chat
      */
-    private void setDateQuestionView(long chatId) {
-        var message = messageUtils.generateSendMessageWithText(
-                chatId,
-                "Введите желаемую дату отправления в формате: YYYY-MM-DD."
-        );
-        setView(message);
+    private void processFromAnswer(RequestData request, String text, long chatId) {
+        // TODO получение кода города и проверка ввода на корректность
+        request.setFrom(text);
+        setChatMessageView(chatId, TO_QUESTION);
     }
 
     /**
-     * Method for setting the view for the question to get the city of arrival.
+     * Method for processing the answer to the question to get the city of arrival.
+     *
+     * @param request request data
+     * @param text    text of question's answer
+     * @param chatId  identifier of chat
+     */
+    private void processToAnswer(RequestData request, String text, long chatId) {
+        // TODO получение кода города и проверка ввода на корректность
+        request.setTo(text);
+        setChatMessageView(chatId, DATE_QUESTION);
+    }
+
+    /**
+     * Method for processing the answer to the question to get the departure date.
+     *
+     * @param request request data
+     * @param text    text of question's answer
+     */
+    private void processDateAnswer(RequestData request, String text) {
+        // TODO добавить возможность указывать или не указывать дату
+        // TODO проверка даты на корректность
+        request.setDate(text);
+    }
+
+    /**
+     * Method for processing the help command.
      *
      * @param chatId identifier of chat
      */
-    private void setToQuestionView(long chatId) {
-        var message = messageUtils.generateSendMessageWithText(
-                chatId, "Введите название населенного пункта прибытия."
-        );
-        setView(message);
+    private void processHelp(long chatId) {
+        setChatMessageView(chatId, HELP_MESSAGE);
+    }
+
+    /**
+     * Method for processing the start command.
+     *
+     * @param chatId identifier of chat
+     */
+    private void processStart(long chatId) {
+        // TODO если пользователь новый, добавить его в БД
+        // TODO добавлять в приветствие имя
+        setChatMessageView(chatId, START_MESSAGE);
     }
 
     /**
@@ -162,7 +183,7 @@ public class UpdateProcessor {
      */
     private void processCancel(long userId, long chatId) {
         requests.remove(userId);
-        setCommandCancelView(chatId);
+        setChatMessageView(chatId, CANCEL_MESSAGE);
     }
 
     /**
@@ -176,8 +197,8 @@ public class UpdateProcessor {
         request.setCurrent(0);
         request.setInputting(true);
         requests.put(userId, request);
-        setCommandTimetableView(chatId);
-        setFromQuestionView(chatId);
+        setChatMessageView(chatId, TIMETABLE_MESSAGE);
+        setChatMessageView(chatId, FROM_QUESTION);
     }
 
     /**
@@ -185,67 +206,9 @@ public class UpdateProcessor {
      *
      * @param chatId identifier of chat
      */
-    private void setFromQuestionView(long chatId) {
+    private void setChatMessageView(long chatId, ChatMessage chatMessage) {
         var message = messageUtils.generateSendMessageWithText(
-                chatId, "Введите название населенного пункта отправления."
-        );
-        setView(message);
-    }
-
-    /**
-     * Method for setting the view for the start command.
-     *
-     * @param chatId identifier of chat
-     */
-    private void setCommandStartView(long chatId) {
-        var message = messageUtils.generateSendMessageWithText(
-                chatId, "Здравствуйте! Вас приветствует железнодорожный бот-ассистент.\n" +
-                        "Для получения дополнительной информации о назначении и функционале бота " +
-                        "введите команду /help."
-        );
-        setView(message);
-    }
-
-    /**
-     * Method for setting the view for the help command.
-     *
-     * @param chatId identifier of chat
-     */
-    private void setCommandHelpView(long chatId) {
-        var message = messageUtils.generateSendMessageWithText(
-                chatId, "Данный бот предоставляет пользователю возможность получить " +
-                        "расписание рейсов между двумя станциями. \n" +
-                        "Доступные команды: \n" +
-                        "/start - приветственное сообщение для начала работы с ботом; \n" +
-                        "/help - повторно вывести данное сообщение; \n" +
-                        "/timetable - получить расписание рейсов между двумя станциями; \n" +
-                        "/cancel - отменить нынешнюю команду."
-        );
-        setView(message);
-    }
-
-    /**
-     * Method for setting the view for the timetable command.
-     *
-     * @param chatId identifier of chat
-     */
-    private void setCommandTimetableView(long chatId) {
-        var message = messageUtils.generateSendMessageWithText(
-                chatId,
-                "Вы запустили процесс получения расписания рейсов между станциями.\n" +
-                        "Пожалуйста, следуйте дальнейшим инструкциям..."
-        );
-        setView(message);
-    }
-
-    /**
-     * Method for setting the view for the cancel command.
-     *
-     * @param chatId identifier of chat
-     */
-    private void setCommandCancelView(long chatId) {
-        var message = messageUtils.generateSendMessageWithText(
-                chatId, "Команда отменена."
+                chatId, chatMessage.getText()
         );
         setView(message);
     }
