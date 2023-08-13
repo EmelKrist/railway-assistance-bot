@@ -1,14 +1,16 @@
 package ru.emelkrist.service.enums;
 
 public enum Command {
-    START("/start"),
-    HELP("/help"),
-    CANCEL("/cancel"),
-    TIMETABLE("/timetable");
+    START("/start", "начать работу с ботом"),
+    HELP("/help", "получить информацию об использовании бота"),
+    CANCEL("/cancel", "отменить выполняемую команду"),
+    TIMETABLE("/timetable", "получить расписание рейсов между станциями");
     private final String value;
+    private final String description;
 
-    Command(String value) {
+    Command(String value, String description) {
         this.value = value;
+        this.description = description;
     }
 
     @Override
@@ -23,5 +25,13 @@ public enum Command {
             }
         }
         return null;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public String getDescription() {
+        return description;
     }
 }
