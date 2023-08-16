@@ -11,6 +11,7 @@ import ru.emelkrist.service.enums.ChatMessage;
 import ru.emelkrist.service.enums.Question;
 import ru.emelkrist.utils.MessageUtils;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static ru.emelkrist.service.enums.ChatMessage.*;
@@ -22,9 +23,12 @@ public class UpdateProcessor {
     private TelegramBot telegramBot;
     private ConcurrentHashMap<Long, RequestData> requests = new ConcurrentHashMap<>();
     private final MessageUtils messageUtils;
+    private final YandexEncodingService yandexEncodingService;
 
-    public UpdateProcessor(MessageUtils messageUtils) {
+    public UpdateProcessor(MessageUtils messageUtils, YandexEncodingService yandexEncodingService) {
         this.messageUtils = messageUtils;
+        this.yandexEncodingService = yandexEncodingService;
+        this.yandexEncodingService.generateMapOfCityCodes();
     }
 
     /**
@@ -106,8 +110,8 @@ public class UpdateProcessor {
         } else if (question.equals(Question.DATE)) {
             processDateAnswer(request, text);
         }
-        current++;
-        request.setCurrent(current);
+        current = request.getCurrent();
+        request.setCurrent(++current);
 
         if (current == Question.getLength()) {
             request.setInputting(false);
@@ -120,27 +124,41 @@ public class UpdateProcessor {
     /**
      * Method for processing the answer to the question to get the departure city.
      *
-     * @param request request data
-     * @param text    text of question's answer
-     * @param chatId  identifier of chat
+     * @param request  request data
+     * @param cityName name of city (text of question's answer)
+     * @param chatId   identifier of chat
      */
-    private void processFromAnswer(RequestData request, String text, long chatId) {
-        // TODO получение кода города и проверка ввода на корректность
-        request.setFrom(text);
-        setChatMessageView(chatId, TO_QUESTION);
+    private void processFromAnswer(RequestData request, String cityName, long chatId) {
+        Optional<String> cityCode = yandexEncodingService.getCityCodeByCityName(cityName);
+        ChatMessage answer;
+        if (cityCode.isPresent()) {
+            request.setFrom(cityCode.get());
+            answer = TO_QUESTION;
+        } else {
+            request.setCurrent(request.getCurrent() - 1);
+            answer = NOT_VALID_CITY_MESSAGE;
+        }
+        setChatMessageView(chatId, answer);
     }
 
     /**
      * Method for processing the answer to the question to get the city of arrival.
      *
      * @param request request data
-     * @param text    text of question's answer
+     * @param cityName name of city (text of question's answer)
      * @param chatId  identifier of chat
      */
-    private void processToAnswer(RequestData request, String text, long chatId) {
-        // TODO получение кода города и проверка ввода на корректность
-        request.setTo(text);
-        setChatMessageView(chatId, DATE_QUESTION);
+    private void processToAnswer(RequestData request, String cityName, long chatId) {
+        Optional<String> cityCode = yandexEncodingService.getCityCodeByCityName(cityName);
+        ChatMessage answer;
+        if (cityCode.isPresent()) {
+            request.setTo(cityCode.get());
+            answer = DATE_QUESTION;
+        } else {
+            request.setCurrent(request.getCurrent() - 1);
+            answer = NOT_VALID_CITY_MESSAGE;
+        }
+        setChatMessageView(chatId, answer);
     }
 
     /**

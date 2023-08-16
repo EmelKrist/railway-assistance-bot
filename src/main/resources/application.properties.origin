@@ -12,3 +12,7 @@ spring.datasource.password=
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
+
+# Yandex Schedules API configuration
+yandex-schedules-api.all-stations.url=https://api.rasp.yandex.net/v3.0/stations_list/?apikey=%s&lang=ru_RU&format=json
+yandex-schedules-api.token=
