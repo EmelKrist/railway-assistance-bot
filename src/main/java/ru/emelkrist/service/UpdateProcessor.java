@@ -9,6 +9,7 @@ import ru.emelkrist.model.RequestData;
 import ru.emelkrist.service.enums.Command;
 import ru.emelkrist.service.enums.ChatMessage;
 import ru.emelkrist.service.enums.Question;
+import ru.emelkrist.utils.DateUtils;
 import ru.emelkrist.utils.MessageUtils;
 
 import java.util.Optional;
@@ -108,7 +109,7 @@ public class UpdateProcessor {
         } else if (question.equals(Question.TO)) {
             processToAnswer(request, text, chatId);
         } else if (question.equals(Question.DATE)) {
-            processDateAnswer(request, text);
+            processDateAnswer(chatId, request, text);
         }
         current = request.getCurrent();
         request.setCurrent(++current);
@@ -144,9 +145,9 @@ public class UpdateProcessor {
     /**
      * Method for processing the answer to the question to get the city of arrival.
      *
-     * @param request request data
+     * @param request  request data
      * @param cityName name of city (text of question's answer)
-     * @param chatId  identifier of chat
+     * @param chatId   identifier of chat
      */
     private void processToAnswer(RequestData request, String cityName, long chatId) {
         Optional<String> cityCode = yandexEncodingService.getCityCodeByCityName(cityName);
@@ -164,13 +165,23 @@ public class UpdateProcessor {
     /**
      * Method for processing the answer to the question to get the departure date.
      *
+     * @param chatId  identifier of chat
      * @param request request data
-     * @param text    text of question's answer
+     * @param answer  text of question's answer
      */
-    private void processDateAnswer(RequestData request, String text) {
-        // TODO добавить возможность указывать или не указывать дату
-        // TODO проверка даты на корректность
-        request.setDate(text);
+    private void processDateAnswer(long chatId, RequestData request, String answer) {
+        if (answer.equals("Да")) return;
+
+        ChatMessage message;
+        if (DateUtils.isValid(answer)) {
+            if (DateUtils.isGreaterThanNow(answer)) {
+                request.setDate(DateUtils.format(answer));
+                return;
+            } else message = IMPOSSIBLE_DATE_MESSAGE;
+        } else message = INVALID_DATE_MESSAGE;
+
+        request.setCurrent(request.getCurrent() - 1);
+        setChatMessageView(chatId, message);
     }
 
     /**
