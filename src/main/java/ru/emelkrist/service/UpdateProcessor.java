@@ -25,10 +25,12 @@ public class UpdateProcessor {
     private ConcurrentHashMap<Long, RequestData> requests = new ConcurrentHashMap<>();
     private final MessageUtils messageUtils;
     private final YandexEncodingService yandexEncodingService;
+    private final AppUserService appUserService;
 
-    public UpdateProcessor(MessageUtils messageUtils, YandexEncodingService yandexEncodingService) {
+    public UpdateProcessor(MessageUtils messageUtils, YandexEncodingService yandexEncodingService, AppUserService appUserService) {
         this.messageUtils = messageUtils;
         this.yandexEncodingService = yandexEncodingService;
+        this.appUserService = appUserService;
         this.yandexEncodingService.generateMapOfCityCodes();
     }
 
@@ -79,7 +81,7 @@ public class UpdateProcessor {
 
         if (command != null) {
             switch (command) {
-                case START -> processStart(chatId);
+                case START -> processStart(update);
                 case HELP -> processHelp(chatId);
                 case TIMETABLE -> processStartTimetable(userId, chatId);
                 case CANCEL -> processCancel(userId, chatId);
@@ -103,7 +105,7 @@ public class UpdateProcessor {
         RequestData request = requests.get(userId);
         int current = request.getCurrent();
         Question question = Question.values()[current];
-
+        // TODO вынести методы для обработки ответов в отдельный сервис
         if (question.equals(Question.FROM)) {
             processFromAnswer(request, text, chatId);
         } else if (question.equals(Question.TO)) {
@@ -196,11 +198,15 @@ public class UpdateProcessor {
     /**
      * Method for processing the start command.
      *
-     * @param chatId identifier of chat
+     * @param update chat update
      */
-    private void processStart(long chatId) {
-        // TODO если пользователь новый, добавить его в БД
-        // TODO добавлять в приветствие имя
+    private void processStart(Update update) {
+        var message = update.getMessage();
+        var chatId = message.getChatId();
+        var appUser = appUserService.findOrSaveAppUser(update);
+        START_MESSAGE.setText(START_MESSAGE.getText()
+                .replace("{name}", appUser.getFirstName())
+        );
         setChatMessageView(chatId, START_MESSAGE);
     }
 

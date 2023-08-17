@@ -10,7 +10,7 @@ spring.datasource.password=
 
 # JPA configuration
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-spring.jpa.hibernate.ddl-auto=update
+spring.jpa.generate-ddl=true
 spring.jpa.show-sql=true
 
 # Yandex Schedules API configuration
