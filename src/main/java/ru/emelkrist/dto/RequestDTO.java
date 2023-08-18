@@ -1,4 +1,4 @@
-package ru.emelkrist.model;
+package ru.emelkrist.dto;
 
 import lombok.*;
 
@@ -7,9 +7,11 @@ import lombok.*;
 @Setter
 @EqualsAndHashCode
 @ToString(exclude = {"current", "isInputting"})
-public class RequestData {
+public class RequestDTO {
     private String from;
+    private String codeFrom;
     private String to;
+    private String codeTo;
     private String date;
     private int current;
     private boolean isInputting = false;

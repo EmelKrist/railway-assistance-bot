@@ -32,7 +32,6 @@ public class YandexEncodingService {
      * @return optional of city code
      */
     public Optional<String> getCityCodeByCityName(String cityName) {
-        cityName = formatCityName(cityName);
         // loop through all city codes
         for (Map.Entry<String, String> cityCode : cityCodes.entrySet()) {
             if (cityCode.getKey().equals(cityName)) {
@@ -42,29 +41,6 @@ public class YandexEncodingService {
         }
         log.debug("City not found for " + cityName);
         return Optional.empty();
-    }
-
-    /**
-     * Method for formatting city name.
-     * Note: format of city name is "Word1 Word2 Word3..."
-     *
-     * @param cityName name of city
-     * @return formatted name of city
-     */
-    private String formatCityName(String cityName) {
-        StringBuilder formattedCityName = new StringBuilder(cityName
-                // remove extra spaces and convert to lowercase
-                .trim()
-                .replaceAll("\\s{2,}", " ")
-                .toLowerCase());
-        // all first letters of each word are converted to uppercase
-        for (int i = 0; i < formattedCityName.length(); i++) {
-            if (i == 0 || formattedCityName.charAt(i - 1) == ' ')
-                formattedCityName.setCharAt(i,
-                        Character.toUpperCase(formattedCityName.charAt(i)));
-        }
-
-        return formattedCityName.toString();
     }
 
     /**

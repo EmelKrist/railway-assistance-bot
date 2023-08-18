@@ -5,10 +5,12 @@ import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.emelkrist.controller.TelegramBot;
-import ru.emelkrist.model.RequestData;
+
+import ru.emelkrist.dto.RequestDTO;
 import ru.emelkrist.service.enums.Command;
 import ru.emelkrist.service.enums.ChatMessage;
 import ru.emelkrist.service.enums.Question;
+import ru.emelkrist.utils.CityUtils;
 import ru.emelkrist.utils.DateUtils;
 import ru.emelkrist.utils.MessageUtils;
 
@@ -22,7 +24,7 @@ import static ru.emelkrist.service.enums.ChatMessage.*;
 public class UpdateProcessor {
 
     private TelegramBot telegramBot;
-    private ConcurrentHashMap<Long, RequestData> requests = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Long, RequestDTO> requests = new ConcurrentHashMap<>();
     private final MessageUtils messageUtils;
     private final YandexEncodingService yandexEncodingService;
     private final AppUserService appUserService;
@@ -77,7 +79,7 @@ public class UpdateProcessor {
         var userId = message.getFrom().getId();
         var chatId = message.getChatId();
         var command = Command.fromValue(text);
-        RequestData request = requests.get(userId);
+        RequestDTO request = requests.get(userId);
 
         if (command != null) {
             switch (command) {
@@ -102,7 +104,7 @@ public class UpdateProcessor {
      * @param chatId identifier of chat
      */
     private void processTimetableInputData(String text, long userId, long chatId) {
-        RequestData request = requests.get(userId);
+        RequestDTO request = requests.get(userId);
         int current = request.getCurrent();
         Question question = Question.values()[current];
         // TODO вынести методы для обработки ответов в отдельный сервис
@@ -131,11 +133,13 @@ public class UpdateProcessor {
      * @param cityName name of city (text of question's answer)
      * @param chatId   identifier of chat
      */
-    private void processFromAnswer(RequestData request, String cityName, long chatId) {
+    private void processFromAnswer(RequestDTO request, String cityName, long chatId) {
+        cityName = CityUtils.formatCityName(cityName);
         Optional<String> cityCode = yandexEncodingService.getCityCodeByCityName(cityName);
         ChatMessage answer;
         if (cityCode.isPresent()) {
-            request.setFrom(cityCode.get());
+            request.setFrom(cityName);
+            request.setCodeFrom(cityCode.get());
             answer = TO_QUESTION;
         } else {
             request.setCurrent(request.getCurrent() - 1);
@@ -151,11 +155,13 @@ public class UpdateProcessor {
      * @param cityName name of city (text of question's answer)
      * @param chatId   identifier of chat
      */
-    private void processToAnswer(RequestData request, String cityName, long chatId) {
+    private void processToAnswer(RequestDTO request, String cityName, long chatId) {
+        cityName = CityUtils.formatCityName(cityName);
         Optional<String> cityCode = yandexEncodingService.getCityCodeByCityName(cityName);
         ChatMessage answer;
         if (cityCode.isPresent()) {
-            request.setTo(cityCode.get());
+            request.setTo(cityName);
+            request.setCodeTo(cityCode.get());
             answer = DATE_QUESTION;
         } else {
             request.setCurrent(request.getCurrent() - 1);
@@ -171,7 +177,7 @@ public class UpdateProcessor {
      * @param request request data
      * @param answer  text of question's answer
      */
-    private void processDateAnswer(long chatId, RequestData request, String answer) {
+    private void processDateAnswer(long chatId, RequestDTO request, String answer) {
         if (answer.equals("Да")) return;
 
         ChatMessage message;
@@ -228,7 +234,7 @@ public class UpdateProcessor {
      * @param chatId identifier of chat
      */
     private void processStartTimetable(long userId, long chatId) {
-        RequestData request = new RequestData();
+        RequestDTO request = new RequestDTO();
         request.setCurrent(0);
         request.setInputting(true);
         requests.put(userId, request);
