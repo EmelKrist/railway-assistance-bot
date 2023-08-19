@@ -28,11 +28,13 @@ public class UpdateProcessor {
     private final MessageUtils messageUtils;
     private final YandexEncodingService yandexEncodingService;
     private final AppUserService appUserService;
+    private final YandexTimetableService yandexTimetableService;
 
-    public UpdateProcessor(MessageUtils messageUtils, YandexEncodingService yandexEncodingService, AppUserService appUserService) {
+    public UpdateProcessor(MessageUtils messageUtils, YandexEncodingService yandexEncodingService, AppUserService appUserService, YandexTimetableService yandexTimetableService) {
         this.messageUtils = messageUtils;
         this.yandexEncodingService = yandexEncodingService;
         this.appUserService = appUserService;
+        this.yandexTimetableService = yandexTimetableService;
         this.yandexEncodingService.generateMapOfCityCodes();
     }
 
@@ -121,7 +123,8 @@ public class UpdateProcessor {
         if (current == Question.getLength()) {
             request.setInputting(false);
             log.debug("New timetable request input data received: " + request.toString());
-            // TODO отправка запроса в api и получение результата
+            String json = yandexTimetableService.getTimetableBetweenTwoStations(request);
+            log.debug("JSON timetable between two stations was received: " + json);
             // TODO добавить сохранение в БД
         }
     }
