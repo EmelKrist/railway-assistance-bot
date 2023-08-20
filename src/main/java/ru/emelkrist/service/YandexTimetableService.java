@@ -1,5 +1,8 @@
 package ru.emelkrist.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -7,6 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import ru.emelkrist.dto.RequestDTO;
+import ru.emelkrist.model.Timetable;
+
+import java.util.ArrayList;
 
 @Service
 @Slf4j
@@ -18,16 +24,62 @@ public class YandexTimetableService {
     private String token;
 
     /**
-     * Method to get timetable data between two stations.
+     * Method to get the list of train timetables between two stations.
      *
      * @param requestDTO request input data
-     * @return timetable in json format
+     * @return list of train timetables
      */
-    public String getTimetableBetweenTwoStations(RequestDTO requestDTO) {
+    public ArrayList<Timetable> getTimetableBetweenTwoStations(RequestDTO requestDTO) {
         String urlWithData = fillUrl(requestDTO);
         ResponseEntity<String> response = sendRequestToGetTimetableBetweenTwoStations(urlWithData);
+        ArrayList<Timetable> timetables = generateListOfTimetables(response.getBody());
+        return timetables;
+    }
 
-        return response.getBody();
+    /**
+     * Method to generate a list with train timetables between two stations.
+     * Note: Receives data from json with timetable and parses it extracting
+     * all the data that the applications needs.
+     *
+     * @param json json with timetable data
+     * @return list of train timetables
+     */
+    private ArrayList<Timetable> generateListOfTimetables(String json) {
+        ArrayList<Timetable> timetables = new ArrayList<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            JsonNode rootNode = objectMapper.readTree(json);
+            JsonNode segmentsNode = rootNode.get("segments");
+            if (segmentsNode.isArray()) {
+                for (JsonNode segment : segmentsNode) {
+                    Timetable timetable = new Timetable();
+
+                    JsonNode threadNode = segment.get("thread");
+                    timetable.setTrainNumber(threadNode.get("number").asText());
+                    timetable.setTrainTitle(threadNode.get("title").asText());
+                    timetable.setTrainUid(threadNode.get("uid").asText());
+
+                    JsonNode fromNode = segment.get("from");
+                    timetable.setFromStationTitle(fromNode.get("title").asText());
+                    timetable.setFromStationCode(fromNode.get("code").asText());
+
+                    JsonNode toNode = segment.get("to");
+                    timetable.setToStationTitle(toNode.get("title").asText());
+                    timetable.setToStationCode(toNode.get("code").asText());
+
+                    timetable.setDeparture(segment.get("departure").asText());
+                    timetable.setArrival(segment.get("arrival").asText());
+                    timetable.setStartDate(segment.get("start_date").asText());
+
+                    timetables.add(timetable);
+                }
+            }
+
+        } catch (JsonProcessingException e) {
+            log.error("Parsing of timetable between two cities was failed: " + e.getMessage());
+        }
+
+        return timetables;
     }
 
     /**

@@ -1,12 +1,14 @@
 package ru.emelkrist.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.emelkrist.controller.TelegramBot;
 
 import ru.emelkrist.dto.RequestDTO;
+import ru.emelkrist.model.Timetable;
 import ru.emelkrist.service.enums.Command;
 import ru.emelkrist.service.enums.ChatMessage;
 import ru.emelkrist.service.enums.Question;
@@ -14,6 +16,7 @@ import ru.emelkrist.utils.CityUtils;
 import ru.emelkrist.utils.DateUtils;
 import ru.emelkrist.utils.MessageUtils;
 
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,12 +32,16 @@ public class UpdateProcessor {
     private final YandexEncodingService yandexEncodingService;
     private final AppUserService appUserService;
     private final YandexTimetableService yandexTimetableService;
+    private final ModelMapper modelMapper;
+    private final RequestService requestService;
 
-    public UpdateProcessor(MessageUtils messageUtils, YandexEncodingService yandexEncodingService, AppUserService appUserService, YandexTimetableService yandexTimetableService) {
+    public UpdateProcessor(MessageUtils messageUtils, YandexEncodingService yandexEncodingService, AppUserService appUserService, YandexTimetableService yandexTimetableService, ModelMapper modelMapper, RequestService requestService) {
         this.messageUtils = messageUtils;
         this.yandexEncodingService = yandexEncodingService;
         this.appUserService = appUserService;
         this.yandexTimetableService = yandexTimetableService;
+        this.modelMapper = modelMapper;
+        this.requestService = requestService;
         this.yandexEncodingService.generateMapOfCityCodes();
     }
 
@@ -123,9 +130,8 @@ public class UpdateProcessor {
         if (current == Question.getLength()) {
             request.setInputting(false);
             log.debug("New timetable request input data received: " + request.toString());
-            String json = yandexTimetableService.getTimetableBetweenTwoStations(request);
-            log.debug("JSON timetable between two stations was received: " + json);
-            // TODO добавить сохранение в БД
+            ArrayList<Timetable> timetables = yandexTimetableService.getTimetableBetweenTwoStations(request);
+            log.debug("List of train timetables between two stations was received: " + timetables.toString());
         }
     }
 
@@ -141,7 +147,7 @@ public class UpdateProcessor {
         Optional<String> cityCode = yandexEncodingService.getCityCodeByCityName(cityName);
         ChatMessage answer;
         if (cityCode.isPresent()) {
-            request.setFrom(cityName);
+            request.setFromCity(cityName);
             request.setCodeFrom(cityCode.get());
             answer = TO_QUESTION;
         } else {
@@ -163,7 +169,7 @@ public class UpdateProcessor {
         Optional<String> cityCode = yandexEncodingService.getCityCodeByCityName(cityName);
         ChatMessage answer;
         if (cityCode.isPresent()) {
-            request.setTo(cityName);
+            request.setToCity(cityName);
             request.setCodeTo(cityCode.get());
             answer = DATE_QUESTION;
         } else {
