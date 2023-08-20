@@ -8,9 +8,9 @@ import lombok.*;
 @EqualsAndHashCode
 @ToString(exclude = {"current", "isInputting"})
 public class RequestDTO {
-    private String from;
+    private String fromCity;
     private String codeFrom;
-    private String to;
+    private String toCity;
     private String codeTo;
     private String date;
     private int current;

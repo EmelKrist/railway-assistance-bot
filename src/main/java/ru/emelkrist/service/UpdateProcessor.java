@@ -8,6 +8,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.emelkrist.controller.TelegramBot;
 
 import ru.emelkrist.dto.RequestDTO;
+import ru.emelkrist.model.Request;
 import ru.emelkrist.model.Timetable;
 import ru.emelkrist.service.enums.Command;
 import ru.emelkrist.service.enums.ChatMessage;
@@ -128,11 +129,27 @@ public class UpdateProcessor {
         request.setCurrent(++current);
 
         if (current == Question.getLength()) {
-            request.setInputting(false);
-            log.debug("New timetable request input data received: " + request.toString());
-            ArrayList<Timetable> timetables = yandexTimetableService.getTimetableBetweenTwoStations(request);
-            log.debug("List of train timetables between two stations was received: " + timetables.toString());
+            processInputClosure(request, userId);
         }
+    }
+
+    /**
+     * Method for processing closure of input to get train
+     * timetables between two stations.
+     *
+     * @param requestDTO input data to send request
+     * @param userId     identifier of user
+     */
+    private void processInputClosure(RequestDTO requestDTO, long userId) {
+        requestDTO.setInputting(false);
+        log.debug("New timetable request input data received: " + requestDTO.toString());
+        ArrayList<Timetable> timetables = yandexTimetableService.getTimetableBetweenTwoStations(requestDTO);
+        log.debug("List of train timetables between two stations was received: " + timetables.toString());
+        Request fullRequest = modelMapper.map(requestDTO, Request.class);
+        fullRequest.setTelegramUserId(userId);
+        log.debug("Request to the Yandex Schedules API completed successfully: " + fullRequest.toString());
+        requestService.save(fullRequest);
+        // TODO добавить вывод расписания пользователю
     }
 
     /**
