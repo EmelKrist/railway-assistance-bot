@@ -3,7 +3,11 @@ package ru.emelkrist.utils;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 public class DateUtils {
     private static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -32,8 +36,21 @@ public class DateUtils {
     public static boolean isGreaterThanNow(String date) {
         try {
             Date checkedDate = parse(date, true);
-            Date now = new Date();
-            return checkedDate.after(now);
+
+            Date elevenMonthsAfterNow = Date.from(LocalDate.now()
+                    .plusMonths(11)
+                    .atStartOfDay(ZoneId.of("Europe/Moscow"))
+                    .toInstant()
+            );
+
+            Date thirtyDaysBeforeNow = Date.from(LocalDate.now()
+                    .minusDays(31)
+                    .atStartOfDay(ZoneId.of("Europe/Moscow"))
+                    .toInstant()
+            );
+
+            return checkedDate.after(thirtyDaysBeforeNow)
+                    && checkedDate.before(elevenMonthsAfterNow);
         } catch (ParseException e) {
             return false;
         }
