@@ -129,7 +129,7 @@ public class UpdateProcessor {
         request.setCurrent(++current);
 
         if (current == Question.getLength()) {
-            processInputClosure(request, userId);
+            processInputClosure(request, userId, chatId);
         }
     }
 
@@ -140,7 +140,7 @@ public class UpdateProcessor {
      * @param requestDTO input data to send request
      * @param userId     identifier of user
      */
-    private void processInputClosure(RequestDTO requestDTO, long userId) {
+    private void processInputClosure(RequestDTO requestDTO, long userId, long chatId) {
         requestDTO.setInputting(false);
         log.debug("New timetable request input data received: " + requestDTO.toString());
         ArrayList<Timetable> timetables = yandexTimetableService.getTimetableBetweenTwoStations(requestDTO);
@@ -149,7 +149,11 @@ public class UpdateProcessor {
         fullRequest.setTelegramUserId(userId);
         log.debug("Request to the Yandex Schedules API completed successfully: " + fullRequest.toString());
         requestService.save(fullRequest);
-        // TODO добавить вывод расписания пользователю
+        if (timetables.isEmpty()) {
+            setChatMessageView(chatId, EMPTY_TIMETABLES_MESSAGE);
+        } else {
+            // TODO добавить вывод расписания пользователю
+        }
     }
 
     /**

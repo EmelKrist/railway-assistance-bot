@@ -32,6 +32,7 @@ public class YandexTimetableService {
     public ArrayList<Timetable> getTimetableBetweenTwoStations(RequestDTO requestDTO) {
         String urlWithData = fillUrl(requestDTO);
         ResponseEntity<String> response = sendRequestToGetTimetableBetweenTwoStations(urlWithData);
+        // TODO добавить проверку json на наличие error и выводить пользователю text ошибки в чат
         ArrayList<Timetable> timetables = generateListOfTimetables(response.getBody());
         return timetables;
     }
