@@ -22,4 +22,8 @@ public class Request {
     private String toCity;
     private String codeTo;
     private String date;
+    private boolean successfully = false;
+    @OneToOne
+    @JoinColumn(name = "response_id", referencedColumnName = "id")
+    private Response response;
 }

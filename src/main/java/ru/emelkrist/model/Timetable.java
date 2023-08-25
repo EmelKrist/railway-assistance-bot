@@ -1,5 +1,6 @@
 package ru.emelkrist.model;
 
+import jakarta.persistence.*;
 import lombok.*;
 
 @Getter
@@ -7,7 +8,13 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
+@Entity
+@Table(name = "timetable")
+@EqualsAndHashCode
 public class Timetable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
     private String trainNumber;
     private String trainTitle;
     private String trainUid;
