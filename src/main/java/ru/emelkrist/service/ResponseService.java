@@ -70,44 +70,13 @@ public class ResponseService {
     }
 
     /**
-     * Method to generate a text of message with page of timetable list.
-     *
-     * @param response response for which the text is generated
-     * @return text of message
-     */
-    public String generateMessageTextWithPageOfTimetable(Response response) {
-        StringBuilder messageText = new StringBuilder();
-        int timetablePage = response.getPage();
-        Timetable timetable = response.getTimetables().get(timetablePage);
-
-        messageText.append("Поезд №").append(timetable.getTrainNumber()).append(": ")
-                .append(timetable.getTrainTitle()).append("\n");
-
-        messageText.append("Станция отправления: ")
-                .append(timetable.getFromStationTitle()).append("\n");
-
-        messageText.append("Станция прибытия: ")
-                .append(timetable.getToStationTitle()).append("\n");
-
-        messageText.append("Отправление: ")
-                .append(DateUtils.getFormattedDateTime(timetable.getDeparture())).append("\n");
-
-        messageText.append("Прибытие: ")
-                .append(DateUtils.getFormattedDateTime(timetable.getArrival())).append("\n");
-
-        messageText.append("\n").append("* указано местное время *");
-
-        return messageText.toString();
-    }
-
-    /**
      * Method for generating a message for the response.
      *
      * @param response response
      * @return message for the response
      */
     public SendMessage generateMessageForResponse(Response response) {
-        String messageText = generateMessageTextWithPageOfTimetable(response);
+        String messageText = MessageUtils.generateMessageTextWithPageOfTimetable(response);
         var message = MessageUtils.generateSendMessageWithText(response.getChatId(), messageText);
 
         if (response.getTimetables().size() > 1) {
@@ -165,7 +134,7 @@ public class ResponseService {
         response.setPage(page);
         save(response);
 
-        String newText = generateMessageTextWithPageOfTimetable(response);
+        String newText = MessageUtils.generateMessageTextWithPageOfTimetable(response);
         var editMessage = MessageUtils.generateEditMessageWithText(chatId, messageId, newText);
         editMessage = ButtonUtils.addEditMessageButtons(editMessage, hasForwardButton, hasBackButton);
 

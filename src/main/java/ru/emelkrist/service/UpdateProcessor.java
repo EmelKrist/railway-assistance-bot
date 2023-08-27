@@ -132,26 +132,36 @@ public class UpdateProcessor {
     private void processTimetableInputData(String text, long userId, long chatId) {
         RequestDTO request = requests.get(userId);
         int current = request.getCurrent();
-        Question question = Question.values()[current];
-        // TODO вынести методы для обработки ответов в отдельный сервис
-        if (question.equals(Question.FROM)) {
-            processFromAnswer(request, text, chatId);
-        } else if (question.equals(Question.TO)) {
-            processToAnswer(request, text, chatId);
-        } else if (question.equals(Question.DATE)) {
-            // TODO убрать руденантную функцию для получения списка
-            //  ближайших поездов по вводу слова Да (либо изменить
-            //  вывод данных для корреткной работы
-            processDateAnswer(chatId, request, text);
-        }
-        current = request.getCurrent();
-        request.setCurrent(++current);
+        if (current < Question.getLength()) {
 
-        if (current == Question.getLength()) {
-            processRequest(request, userId, chatId);
-        }
+            Question question = Question.values()[current];
+            // TODO вынести методы для обработки ответов в отдельный сервис
+            if (question.equals(Question.FROM)) {
+                processFromAnswer(request, text, chatId);
+            } else if (question.equals(Question.TO)) {
+                processToAnswer(request, text, chatId);
+            } else if (question.equals(Question.DATE)) {
+                // TODO убрать руденантную функцию для получения списка
+                //  ближайших поездов по вводу слова Да (либо изменить
+                //  вывод данных для корреткной работы
+                processDateAnswer(chatId, request, text);
+            }
+            current = request.getCurrent();
+            request.setCurrent(++current);
 
-        // TODO добавить подтверждение входных данных запроса.
+            // if questions have been answered a confirmation message is displayed
+            if (current == Question.getLength()) {
+                String confirmationRequestMessage = MessageUtils.generateTextOfConfirmationRequestMessage(request);
+                setChatMessageView(chatId, confirmationRequestMessage);
+            }
+        } else { /* depending on the answer to the confirmation of the response
+            process the request of cancel it */
+            if (text.equals(YES_MESSAGE.getText())) {
+                processRequest(request, userId, chatId);
+            } else if (text.equals(NO_MESSAGE.getText())) {
+                processCancel(userId, chatId);
+            }
+        }
     }
 
     /**
@@ -321,6 +331,18 @@ public class UpdateProcessor {
     private void setChatMessageView(long chatId, ChatMessage chatMessage) {
         var message = MessageUtils.generateSendMessageWithText(
                 chatId, chatMessage.getText()
+        );
+        setView(message);
+    }
+
+    /**
+     * Method for setting the view for the question to get the departure city.
+     *
+     * @param chatId identifier of chat
+     */
+    private void setChatMessageView(long chatId, String chatMessage) {
+        var message = MessageUtils.generateSendMessageWithText(
+                chatId, chatMessage
         );
         setView(message);
     }

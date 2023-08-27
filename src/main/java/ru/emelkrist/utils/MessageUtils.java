@@ -3,6 +3,9 @@ package ru.emelkrist.utils;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import ru.emelkrist.dto.RequestDTO;
+import ru.emelkrist.model.Response;
+import ru.emelkrist.model.Timetable;
 
 @Component
 public class MessageUtils {
@@ -37,5 +40,57 @@ public class MessageUtils {
         editMessage.setText(newTextMessage);
 
         return editMessage;
+    }
+
+    /**
+     * Method to generate a text of message with page of timetable list.
+     *
+     * @param response response for which the text is generated
+     * @return text of message
+     */
+    public static String generateMessageTextWithPageOfTimetable(Response response) {
+        StringBuilder messageText = new StringBuilder();
+        int timetablePage = response.getPage();
+        Timetable timetable = response.getTimetables().get(timetablePage);
+
+        messageText.append("Поезд №").append(timetable.getTrainNumber()).append(": ")
+                .append(timetable.getTrainTitle()).append("\n");
+
+        messageText.append("Станция отправления: ")
+                .append(timetable.getFromStationTitle()).append("\n");
+
+        messageText.append("Станция прибытия: ")
+                .append(timetable.getToStationTitle()).append("\n");
+
+        messageText.append("Отправление: ")
+                .append(DateUtils.getFormattedDateTime(timetable.getDeparture())).append("\n");
+
+        messageText.append("Прибытие: ")
+                .append(DateUtils.getFormattedDateTime(timetable.getArrival())).append("\n");
+
+        messageText.append("\n").append("* указано местное время *");
+
+        return messageText.toString();
+    }
+
+    /**
+     * Method to generate text of confirmation request message.
+     *
+     * @param requestDTO request data
+     * @return text of message with request data
+     */
+    public static String generateTextOfConfirmationRequestMessage(RequestDTO requestDTO) {
+        StringBuilder confirmationRequestMessage = new StringBuilder();
+
+        confirmationRequestMessage
+                .append("Данные запроса были получены.").append("\n")
+                .append("1. Пункт отправления: ").append(requestDTO.getFromCity()).append(";\n")
+                .append("2. Пункт прибытия: ").append(requestDTO.getToCity()).append(";\n")
+                .append("3. Дата рейса: ")
+                .append(requestDTO.getDate() == null ? "не указана" : requestDTO.getDate()).append(".\n")
+                .append("Для подтверждения получения расписания ответьте \"Да\".\n")
+                .append("В противном случае ответьте \"Нет\" или пропишите команду /cancel.");
+
+        return confirmationRequestMessage.toString();
     }
 }
