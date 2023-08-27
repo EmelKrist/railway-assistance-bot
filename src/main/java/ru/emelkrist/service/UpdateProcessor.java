@@ -4,14 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.emelkrist.controller.TelegramBot;
-
 import ru.emelkrist.dto.RequestDTO;
 import ru.emelkrist.model.Request;
+import ru.emelkrist.model.Response;
 import ru.emelkrist.model.Timetable;
-import ru.emelkrist.service.enums.Command;
 import ru.emelkrist.service.enums.ChatMessage;
+import ru.emelkrist.service.enums.Command;
 import ru.emelkrist.service.enums.Question;
 import ru.emelkrist.utils.CityUtils;
 import ru.emelkrist.utils.DateUtils;
@@ -29,20 +30,21 @@ public class UpdateProcessor {
 
     private TelegramBot telegramBot;
     private ConcurrentHashMap<Long, RequestDTO> requests = new ConcurrentHashMap<>();
-    private final MessageUtils messageUtils;
     private final YandexEncodingService yandexEncodingService;
     private final AppUserService appUserService;
     private final YandexTimetableService yandexTimetableService;
     private final ModelMapper modelMapper;
     private final RequestService requestService;
+    private final ResponseService responseService;
 
-    public UpdateProcessor(MessageUtils messageUtils, YandexEncodingService yandexEncodingService, AppUserService appUserService, YandexTimetableService yandexTimetableService, ModelMapper modelMapper, RequestService requestService) {
-        this.messageUtils = messageUtils;
+
+    public UpdateProcessor(YandexEncodingService yandexEncodingService, AppUserService appUserService, YandexTimetableService yandexTimetableService, ModelMapper modelMapper, RequestService requestService, ResponseService responseService) {
         this.yandexEncodingService = yandexEncodingService;
         this.appUserService = appUserService;
         this.yandexTimetableService = yandexTimetableService;
         this.modelMapper = modelMapper;
         this.requestService = requestService;
+        this.responseService = responseService;
         this.yandexEncodingService.generateMapOfCityCodes();
     }
 
@@ -71,6 +73,8 @@ public class UpdateProcessor {
 
         if (update.hasMessage() && update.getMessage().hasText()) {
             processTextMessage(update);
+        } else if (update.hasCallbackQuery()) {
+            processCallbackQuery(update);
         } else {
             log.error("Unsupported message type is received: " + update);
         }
@@ -106,6 +110,18 @@ public class UpdateProcessor {
     }
 
     /**
+     * Method for processing callback queries.
+     *
+     * @param update chat update
+     */
+    private void processCallbackQuery(Update update) {
+        var editedMessage = responseService.turnResponsePage(update);
+        if (editedMessage != null) {
+            editView(editedMessage);
+        }
+    }
+
+    /**
      * Method of processing the input data received from the user,
      * necessary to get the train timetable between stations.
      *
@@ -123,14 +139,19 @@ public class UpdateProcessor {
         } else if (question.equals(Question.TO)) {
             processToAnswer(request, text, chatId);
         } else if (question.equals(Question.DATE)) {
+            // TODO убрать руденантную функцию для получения списка
+            //  ближайших поездов по вводу слова Да (либо изменить
+            //  вывод данных для корреткной работы
             processDateAnswer(chatId, request, text);
         }
         current = request.getCurrent();
         request.setCurrent(++current);
 
         if (current == Question.getLength()) {
-            processInputClosure(request, userId, chatId);
+            processRequest(request, userId, chatId);
         }
+
+        // TODO добавить подтверждение входных данных запроса.
     }
 
     /**
@@ -140,20 +161,40 @@ public class UpdateProcessor {
      * @param requestDTO input data to send request
      * @param userId     identifier of user
      */
-    private void processInputClosure(RequestDTO requestDTO, long userId, long chatId) {
+    private void processRequest(RequestDTO requestDTO, long userId, long chatId) {
         requestDTO.setInputting(false);
-        log.debug("New timetable request input data received: " + requestDTO.toString());
+        setChatMessageView(chatId, REQUEST_PROCESSING_MESSAGE);
         ArrayList<Timetable> timetables = yandexTimetableService.getTimetableBetweenTwoStations(requestDTO);
-        log.debug("List of train timetables between two stations was received: " + timetables.toString());
         Request fullRequest = modelMapper.map(requestDTO, Request.class);
         fullRequest.setTelegramUserId(userId);
-        log.debug("Request to the Yandex Schedules API completed successfully: " + fullRequest.toString());
-        requestService.save(fullRequest);
         if (timetables.isEmpty()) {
             setChatMessageView(chatId, EMPTY_TIMETABLES_MESSAGE);
         } else {
-            // TODO добавить вывод расписания пользователю
+            setChatMessageView(chatId, TIMETABLE_WAS_RECEIVED_MESSAGE);
+            Response response = processResponse(chatId, timetables);
+            fullRequest.setResponse(response);
+            fullRequest.setSuccessfully(true);
         }
+        requestService.save(fullRequest);
+        requests.remove(userId);
+    }
+
+    /**
+     * Method for processing the response to the request.
+     *
+     * @param chatId     identifier of chat
+     * @param timetables list of timetables
+     * @return response to request
+     */
+    private Response processResponse(long chatId, ArrayList<Timetable> timetables) {
+        Response response = responseService.createResponse(chatId, timetables);
+        SendMessage message = responseService.generateMessageForResponse(response);
+
+        int messageId = setView(message);
+        response.setMessageId(messageId);
+
+        responseService.save(response);
+        return response;
     }
 
     /**
@@ -278,7 +319,7 @@ public class UpdateProcessor {
      * @param chatId identifier of chat
      */
     private void setChatMessageView(long chatId, ChatMessage chatMessage) {
-        var message = messageUtils.generateSendMessageWithText(
+        var message = MessageUtils.generateSendMessageWithText(
                 chatId, chatMessage.getText()
         );
         setView(message);
@@ -289,7 +330,16 @@ public class UpdateProcessor {
      *
      * @param message sending message
      */
-    private void setView(SendMessage message) {
-        telegramBot.sendMessage(message);
+    public int setView(SendMessage message) {
+        return telegramBot.sendMessage(message);
+    }
+
+    /**
+     * Method to edit the message (view) to the user.
+     *
+     * @param message sending message
+     */
+    public void editView(EditMessageText message) {
+        telegramBot.editMessage(message);
     }
 }

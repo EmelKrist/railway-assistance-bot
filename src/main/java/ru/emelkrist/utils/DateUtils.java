@@ -4,13 +4,19 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
 public class DateUtils {
     private static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    private static DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     /**
      * Date format validation method.
@@ -68,6 +74,35 @@ public class DateUtils {
             return dateFormat.format(parsedDate);
         } catch (ParseException e) {
             return date;
+        }
+    }
+
+    /**
+     * Method for getting of current date in Moscow time zone.
+     *
+     * @return string date
+     */
+    public static String getStringCurrentDateInMoscowTimeZone() {
+        return Date.from(LocalDate.now()
+                .atStartOfDay(ZoneId.of("Europe/Moscow"))
+                .toInstant()
+        ).toString();
+    }
+
+    /**
+     * Method for getting formatted date and time.
+     *
+     * @param dateTime input date and time
+     * @return formatted date and time
+     */
+    public static String getFormattedDateTime(String dateTime) {
+        try {
+            ZonedDateTime outputDateTime = ZonedDateTime.parse(dateTime);
+            return outputDateTime.format(dateTimeFormatter);
+        } catch (DateTimeParseException e) {
+            // TODO разобраться с ошибкой Text '12:10:00' could not be parsed at index 0
+            //  которая возникает, если запросить список ближайших поездов до владивостока
+            return dateTime;
         }
     }
 

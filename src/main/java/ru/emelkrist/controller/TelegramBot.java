@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
@@ -75,7 +77,21 @@ public class TelegramBot extends TelegramLongPollingBot {
      *
      * @param message prepared message for sending
      */
-    public void sendMessage(BotApiMethod message) {
+    public int sendMessage(SendMessage message) {
+        try {
+            return execute(message).getMessageId();
+        } catch (TelegramApiException e) {
+            log.error("Error: " + e.getMessage());
+        }
+        return -1;
+    }
+
+    /**
+     * Method for execution of a message's editing to a user's chat.
+     *
+     * @param message prepared message for editing
+     */
+    public void editMessage(EditMessageText message) {
         try {
             execute(message);
         } catch (TelegramApiException e) {
