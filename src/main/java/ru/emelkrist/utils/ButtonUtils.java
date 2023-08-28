@@ -3,7 +3,7 @@ package ru.emelkrist.utils;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import ru.emelkrist.service.enums.MessageButton;
+import ru.emelkrist.service.enums.ChatButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +25,7 @@ public class ButtonUtils {
 
         if (hasBackButton) {
             var backKeyboardButton = new InlineKeyboardButton();
-            MessageButton backButton = MessageButton.BACK_BUTTON;
+            ChatButton backButton = ChatButton.BACK_BUTTON;
             backKeyboardButton.setText(backButton.getText());
             backKeyboardButton.setCallbackData(backButton.getCallbackData());
             rowInLine.add(backKeyboardButton);
@@ -33,7 +33,7 @@ public class ButtonUtils {
 
         if (hasForwardButton) {
             var forthKeyboardButton = new InlineKeyboardButton();
-            MessageButton forwardButton = MessageButton.FORWARD_BUTTON;
+            ChatButton forwardButton = ChatButton.FORWARD_BUTTON;
             forthKeyboardButton.setText(forwardButton.getText());
             forthKeyboardButton.setCallbackData(forwardButton.getCallbackData());
             rowInLine.add(forthKeyboardButton);

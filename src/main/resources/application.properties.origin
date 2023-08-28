@@ -11,7 +11,6 @@ spring.datasource.password=
 # JPA configuration
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.generate-ddl=true
-spring.jpa.show-sql=true
 
 # Yandex Schedules API configuration
 yandex-schedules-api.timetable.between-two-stations.url=https://api.rasp.yandex.net/v3.0/search/?apikey=%s&format=json&from=%s&to=%s&lang=ru_RU&transport_types=train

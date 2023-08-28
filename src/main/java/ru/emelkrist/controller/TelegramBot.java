@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -14,30 +13,28 @@ import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.emelkrist.config.BotConfig;
-import ru.emelkrist.service.UpdateProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static ru.emelkrist.service.enums.Command.*;
+import static ru.emelkrist.service.enums.ChatCommand.*;
 
 @Component
 @Slf4j
 public class TelegramBot extends TelegramLongPollingBot {
 
     private final BotConfig config;
-
-    private final UpdateProcessor updateProcessor;
+    private final UpdateController updateController;
 
     @PostConstruct
     private void init() {
-        updateProcessor.registerBot(this);
+        updateController.registerBot(this);
     }
 
     @Autowired
-    public TelegramBot(BotConfig config, UpdateProcessor updateProcessor) {
+    public TelegramBot(BotConfig config, UpdateController updateController) {
         this.config = config;
-        this.updateProcessor = updateProcessor;
+        this.updateController = updateController;
         setMenu();
     }
 
@@ -69,7 +66,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        updateProcessor.processUpdate(update);
+        updateController.processUpdate(update);
     }
 
     /**

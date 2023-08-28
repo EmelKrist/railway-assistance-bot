@@ -1,6 +1,6 @@
 package ru.emelkrist.service.enums;
 
-public enum Command {
+public enum ChatCommand {
     START("/start", "начать работу с ботом"),
     HELP("/help", "получить информацию об использовании бота"),
     CANCEL("/cancel", "отменить выполняемую команду"),
@@ -8,7 +8,7 @@ public enum Command {
     private final String value;
     private final String description;
 
-    Command(String value, String description) {
+    ChatCommand(String value, String description) {
         this.value = value;
         this.description = description;
     }
@@ -18,8 +18,8 @@ public enum Command {
         return value;
     }
 
-    public static Command fromValue(String v) {
-        for (Command cmd : Command.values()) {
+    public static ChatCommand fromValue(String v) {
+        for (ChatCommand cmd : ChatCommand.values()) {
             if (cmd.value.equals(v)) {
                 return cmd;
             }

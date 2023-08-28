@@ -1,10 +1,10 @@
 package ru.emelkrist.service.enums;
 
-public enum Question {
+public enum ChatQuestion {
     FROM, TO, DATE;
 
     public static int getLength() {
-        return Question.values().length;
+        return ChatQuestion.values().length;
     }
 }
 

@@ -8,10 +8,11 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import ru.emelkrist.controller.UpdateController;
 import ru.emelkrist.model.Response;
 import ru.emelkrist.model.Timetable;
 import ru.emelkrist.repository.ResponseRepository;
-import ru.emelkrist.service.enums.MessageButton;
+import ru.emelkrist.service.enums.ChatButton;
 import ru.emelkrist.utils.ButtonUtils;
 import ru.emelkrist.utils.DateUtils;
 import ru.emelkrist.utils.MessageUtils;
@@ -25,11 +26,20 @@ import java.util.Optional;
 @Transactional
 public class ResponseService {
 
+    private UpdateController updateController;
     private final ResponseRepository responseRepository;
 
     @Autowired
     public ResponseService(ResponseRepository responseRepository) {
         this.responseRepository = responseRepository;
+    }
+
+    /**
+     * Method for UpdateController injection.
+     * @param updateController controller of updates
+     */
+    public void registerUpdateController(UpdateController updateController) {
+        this.updateController = updateController;
     }
 
     /**
@@ -52,6 +62,25 @@ public class ResponseService {
         responseRepository.save(response);
     }
 
+
+    /**
+     * Method for processing the response to the request.
+     *
+     * @param chatId     identifier of chat
+     * @param timetables list of timetables
+     * @return response to request
+     */
+    public Response processResponse(long chatId, ArrayList<Timetable> timetables) {
+        Response response = createResponse(chatId, timetables);
+        SendMessage message = generateMessageForResponse(response);
+
+        int messageId = updateController.setView(message);
+        response.setMessageId(messageId);
+
+        save(response);
+        return response;
+    }
+
     /**
      * Method to create a response and to enrich it by chat id,
      * current date and list of timetables.
@@ -60,7 +89,7 @@ public class ResponseService {
      * @param timetables list of timetables
      * @return created response
      */
-    public Response createResponse(long chatId, ArrayList<Timetable> timetables) {
+    private Response createResponse(long chatId, ArrayList<Timetable> timetables) {
         Response response = new Response();
         response.setTimetables(timetables);
         response.setDate(DateUtils.getStringCurrentDateInMoscowTimeZone());
@@ -75,7 +104,7 @@ public class ResponseService {
      * @param response response
      * @return message for the response
      */
-    public SendMessage generateMessageForResponse(Response response) {
+    private SendMessage generateMessageForResponse(Response response) {
         String messageText = MessageUtils.generateMessageTextWithPageOfTimetable(response);
         var message = MessageUtils.generateSendMessageWithText(response.getChatId(), messageText);
 
@@ -97,6 +126,7 @@ public class ResponseService {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         long messageId = update.getCallbackQuery().getMessage().getMessageId();
 
+        // todo вынести получение ответа в отдельный метод
         Optional<Response> optionalResponse = findByChatIdAndMessageId(chatId, messageId);
         Response response = null;
         if (optionalResponse.isPresent()) {
@@ -114,11 +144,11 @@ public class ResponseService {
         String callbackData = update.getCallbackQuery().getData();
         int page = response.getPage();
         List<Timetable> timetables = response.getTimetables();
-        if (callbackData.equals(MessageButton.FORWARD_BUTTON.getCallbackData())) {
+        if (callbackData.equals(ChatButton.FORWARD_BUTTON.getCallbackData())) {
             if (page < timetables.size() - 1) {
                 page++;
             }
-        } else if (callbackData.equals(MessageButton.BACK_BUTTON.getCallbackData())) {
+        } else if (callbackData.equals(ChatButton.BACK_BUTTON.getCallbackData())) {
             if (page > 0) {
                 page--;
             }
