@@ -53,22 +53,24 @@ public class MessageUtils {
         int timetablePage = response.getPage();
         Timetable timetable = response.getTimetables().get(timetablePage);
 
-        messageText.append("Поезд №").append(timetable.getTrainNumber()).append(": ")
-                .append(timetable.getTrainTitle()).append("\n");
-
-        messageText.append("Станция отправления: ")
-                .append(timetable.getFromStationTitle()).append("\n");
-
-        messageText.append("Станция прибытия: ")
+        messageText
+                .append("Поезд №").append(timetable.getTrainNumber()).append(": ")
+                .append(timetable.getTrainTitle()).append("\n")
+                .append("Станция отправления: ")
+                .append(timetable.getFromStationTitle()).append("\n")
+                .append("Станция прибытия: ")
                 .append(timetable.getToStationTitle()).append("\n");
 
-        messageText.append("Отправление: ")
-                .append(DateUtils.getFormattedDateTime(timetable.getDeparture())).append("\n");
+        if (timetable.getDays() != null) {
+            messageText.append("Дни: ").append(timetable.getDays()).append("\n");
+        }
 
-        messageText.append("Прибытие: ")
-                .append(DateUtils.getFormattedDateTime(timetable.getArrival())).append("\n");
-
-        messageText.append("\n").append("* указано местное время *");
+        messageText
+                .append("Отправление: ")
+                .append(DateUtils.getFormattedDateTime(timetable.getDeparture())).append("\n")
+                .append("Прибытие: ")
+                .append(DateUtils.getFormattedDateTime(timetable.getArrival())).append("\n")
+                .append("\n").append("* указано местное время *");
 
         return messageText.toString();
     }
@@ -87,7 +89,7 @@ public class MessageUtils {
                 .append("1. Пункт отправления: ").append(requestDTO.getFromCity()).append(";\n")
                 .append("2. Пункт прибытия: ").append(requestDTO.getToCity()).append(";\n")
                 .append("3. Дата рейса: ")
-                .append(requestDTO.getDate() == null ? "не указана" : requestDTO.getDate()).append(".\n")
+                .append(requestDTO.getDate() == null ? "все дни" : requestDTO.getDate()).append(".\n")
                 .append("Для подтверждения получения расписания ответьте \"Да\".\n")
                 .append("В противном случае ответьте \"Нет\" или пропишите команду /cancel.");
 

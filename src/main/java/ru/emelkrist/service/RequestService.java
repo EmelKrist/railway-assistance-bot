@@ -75,9 +75,6 @@ public class RequestService {
             } else if (chatQuestion.equals(ChatQuestion.TO)) {
                 answerService.processToAnswer(request, text, chatId);
             } else if (chatQuestion.equals(ChatQuestion.DATE)) {
-                // TODO убрать руденантную функцию для получения списка
-                //  ближайших поездов по вводу слова Да (либо изменить
-                //  вывод данных для корреткной работы
                 answerService.processDateAnswer(chatId, request, text);
             }
             current = request.getCurrent();

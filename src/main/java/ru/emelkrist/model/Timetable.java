@@ -24,5 +24,5 @@ public class Timetable {
     private String toStationCode;
     private String departure;
     private String arrival;
-    private String startDate;
+    private String days;
 }

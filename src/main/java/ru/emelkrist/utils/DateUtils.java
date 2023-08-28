@@ -1,5 +1,7 @@
 package ru.emelkrist.utils;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -13,6 +15,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+@Slf4j
 public class DateUtils {
     private static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -96,14 +99,16 @@ public class DateUtils {
      * @return formatted date and time
      */
     public static String getFormattedDateTime(String dateTime) {
-        try {
+        if (dateTime.length() == 8) { // for 12:00:00 format
+            return dateTime.substring(0, 5);
+        }
+        try { // for ISO 8601 format
             ZonedDateTime outputDateTime = ZonedDateTime.parse(dateTime);
             return outputDateTime.format(dateTimeFormatter);
         } catch (DateTimeParseException e) {
-            // TODO разобраться с ошибкой Text '12:10:00' could not be parsed at index 0
-            //  которая возникает, если запросить список ближайших поездов до владивостока
-            return dateTime;
+            log.error("DataTimeParseException was thrown: " + e.getMessage());
         }
+        return null;
     }
 
     /**

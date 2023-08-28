@@ -70,7 +70,11 @@ public class YandexTimetableService {
 
                     timetable.setDeparture(segment.get("departure").asText());
                     timetable.setArrival(segment.get("arrival").asText());
-                    timetable.setStartDate(segment.get("start_date").asText());
+
+                    JsonNode daysNode = segment.findValue("days");
+                    if (daysNode != null) {
+                        timetable.setDays(daysNode.asText());
+                    }
 
                     timetables.add(timetable);
                 }
