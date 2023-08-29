@@ -2,6 +2,7 @@ package ru.emelkrist.controller;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
@@ -24,13 +25,16 @@ public class UpdateController {
     private final RequestService requestService;
     private final ResponseService responseService;
     private final AnswerService answerService;
+    private final BotLockService botLockService;
 
-    public UpdateController(YandexEncodingService yandexEncodingService, AppUserService appUserService, RequestService requestService, ResponseService responseService, AnswerService answerService) {
+    @Autowired
+    public UpdateController(YandexEncodingService yandexEncodingService, AppUserService appUserService, RequestService requestService, ResponseService responseService, AnswerService answerService, BotLockService botLockService) {
         this.yandexEncodingService = yandexEncodingService;
         this.appUserService = appUserService;
         this.requestService = requestService;
         this.responseService = responseService;
         this.answerService = answerService;
+        this.botLockService = botLockService;
         this.yandexEncodingService.generateMapOfCityCodes();
     }
 
@@ -59,17 +63,21 @@ public class UpdateController {
      * @param update chat update
      */
     public void processUpdate(Update update) {
-        if (update == null) {
-            log.error("Received update is null");
-            return;
-        }
-
-        if (update.hasMessage() && update.getMessage().hasText()) {
-            processTextMessage(update);
-        } else if (update.hasCallbackQuery()) {
-            processCallbackQuery(update);
+        if (botLockService.isLocked()) {
+            lockMessaging(update);
         } else {
-            log.error("Unsupported message type is received: " + update);
+            if (update == null) {
+                log.error("Received update is null");
+                return;
+            }
+
+            if (update.hasMessage() && update.getMessage().hasText()) {
+                processTextMessage(update);
+            } else if (update.hasCallbackQuery()) {
+                processCallbackQuery(update);
+            } else {
+                log.error("Unsupported message type is received: " + update);
+            }
         }
     }
 
@@ -112,6 +120,17 @@ public class UpdateController {
         if (editedMessage != null) {
             editView(editedMessage);
         }
+    }
+
+    /**
+     * Method to send an information message about locking the bot to the user's chat.
+     *
+     * @param update chat update
+     */
+    private void lockMessaging(Update update) {
+        var message = update.getMessage();
+        var chatId = message.getChatId();
+        setChatMessageView(chatId, BOT_LOCKED_MESSAGE);
     }
 
     /**

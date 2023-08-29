@@ -18,4 +18,5 @@ yandex-schedules-api.all-stations.url=https://api.rasp.yandex.net/v3.0/stations_
 yandex-schedules-api.token=
 
 # Scheduler configuration
-cron.cleaner.old-data=0 0 * * * *
+cron.cleaner.old-responses=0 0 * * * *
+cron.updater.city-codes=0 0 * * * *
