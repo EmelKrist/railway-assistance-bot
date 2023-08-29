@@ -25,4 +25,7 @@ public class Timetable {
     private String departure;
     private String arrival;
     private String days;
+    @ManyToOne
+    @JoinColumn(name = "response_id", referencedColumnName = "id")
+    private Response response;
 }

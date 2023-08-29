@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Cascade;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,14 +23,10 @@ public class Response {
     private long id;
     private long chatId;
     private int messageId;
-    private String date;
+    private LocalDate date;
     private int page = 0;
-    @OneToOne(mappedBy = "response")
-    @Cascade(org.hibernate.annotations.CascadeType.SAVE_UPDATE)
+    @OneToOne(mappedBy = "response", cascade = CascadeType.ALL, orphanRemoval = true)
     private Request request;
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinTable(name = "response_timetable",
-            joinColumns = @JoinColumn(name = "response_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "timetable_id", referencedColumnName = "id"))
+    @OneToMany(mappedBy = "response", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Timetable> timetables;
 }

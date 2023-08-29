@@ -83,13 +83,12 @@ public class DateUtils {
     /**
      * Method for getting of current date in Moscow time zone.
      *
-     * @return string date
+     * @return date
      */
-    public static String getStringCurrentDateInMoscowTimeZone() {
-        return Date.from(LocalDate.now()
+    public static LocalDate getCurrentDateInMoscowTimeZone() {
+        return LocalDate.now()
                 .atStartOfDay(ZoneId.of("Europe/Moscow"))
-                .toInstant()
-        ).toString();
+                .toLocalDate();
     }
 
     /**

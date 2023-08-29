@@ -69,7 +69,6 @@ public class RequestService {
         if (current < ChatQuestion.getLength()) {
 
             ChatQuestion chatQuestion = ChatQuestion.values()[current];
-            // TODO вынести методы для обработки ответов в отдельный сервис
             if (chatQuestion.equals(ChatQuestion.FROM)) {
                 answerService.processFromAnswer(request, text, chatId);
             } else if (chatQuestion.equals(ChatQuestion.TO)) {

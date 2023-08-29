@@ -17,9 +17,12 @@ import ru.emelkrist.utils.ButtonUtils;
 import ru.emelkrist.utils.DateUtils;
 import ru.emelkrist.utils.MessageUtils;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static ru.emelkrist.service.enums.ChatMessage.SESSION_EXPIRED_MESSAGE;
 
 @Service
 @Slf4j
@@ -36,6 +39,7 @@ public class ResponseService {
 
     /**
      * Method for UpdateController injection.
+     *
      * @param updateController controller of updates
      */
     public void registerUpdateController(UpdateController updateController) {
@@ -59,9 +63,28 @@ public class ResponseService {
      * @param response saved response
      */
     public void save(Response response) {
+        response.getTimetables().forEach(timetable -> timetable.setResponse(response));
         responseRepository.save(response);
     }
 
+    /**
+     * Method for deleting the response from the database.
+     *
+     * @param response deleted response
+     */
+    public void delete(Response response) {
+        responseRepository.delete(response);
+    }
+
+    /**
+     * Method to find all responses with a date before the specified date.
+     *
+     * @param date date
+     * @return list of responses
+     */
+    public List<Response> findAllByDateBefore(LocalDate date) {
+        return responseRepository.findAllByDateBefore(date);
+    }
 
     /**
      * Method for processing the response to the request.
@@ -92,7 +115,7 @@ public class ResponseService {
     private Response createResponse(long chatId, ArrayList<Timetable> timetables) {
         Response response = new Response();
         response.setTimetables(timetables);
-        response.setDate(DateUtils.getStringCurrentDateInMoscowTimeZone());
+        response.setDate(DateUtils.getCurrentDateInMoscowTimeZone());
         response.setChatId(chatId);
 
         return response;
@@ -132,13 +155,9 @@ public class ResponseService {
         if (optionalResponse.isPresent()) {
             response = optionalResponse.get();
         } else {
-            log.debug("Request not found in database!");
-            return null;
-            // TODO добавить сообщение об устаревании или отсутствии данных
-            //  * добавить периодическую очитку слишком старых расписаний из БД *
-            //  * подумать над тем, чтобы помимо отчистки БД очищать еще и личку
-            //  бота с определенной периодичностью, чтобы доступа к старым сообщениям
-            //  не было вовсе *
+            log.debug("Response not found in database!");
+            return MessageUtils.generateEditMessageWithText(chatId, messageId,
+                    SESSION_EXPIRED_MESSAGE.getText());
         }
 
         String callbackData = update.getCallbackQuery().getData();

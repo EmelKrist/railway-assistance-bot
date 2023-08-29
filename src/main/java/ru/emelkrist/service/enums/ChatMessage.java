@@ -34,9 +34,9 @@ public enum ChatMessage {
     REQUEST_PROCESSING_MESSAGE("Запрос получен! Обрабатывается..."),
     TIMETABLE_WAS_RECEIVED_MESSAGE("Расписание поездов для заданного маршрута."),
     YES_MESSAGE("Да"),
-    NO_MESSAGE("Нет");
-    //    SESSION_EXPIRED_MESSAGE("Данные расписания устарели!\n" +
-//            "Пожалуйста, создайте новый запрос для получения актуальной информации");
+    NO_MESSAGE("Нет"),
+    SESSION_EXPIRED_MESSAGE("Данные расписания устарели!\n" +
+            "Пожалуйста, создайте новый запрос для получения актуальной информации.");
     private String text;
 
     ChatMessage(String text) {
