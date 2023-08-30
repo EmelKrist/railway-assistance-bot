@@ -149,7 +149,6 @@ public class ResponseService {
         long chatId = update.getCallbackQuery().getMessage().getChatId();
         long messageId = update.getCallbackQuery().getMessage().getMessageId();
 
-        // todo вынести получение ответа в отдельный метод
         Optional<Response> optionalResponse = findByChatIdAndMessageId(chatId, messageId);
         Response response = null;
         if (optionalResponse.isPresent()) {

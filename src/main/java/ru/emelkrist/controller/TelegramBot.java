@@ -13,8 +13,6 @@ import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import ru.emelkrist.config.BotConfig;
-import ru.emelkrist.service.BotLockService;
-import ru.emelkrist.utils.MessageUtils;
 
 import java.util.ArrayList;
 import java.util.List;

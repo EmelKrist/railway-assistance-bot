@@ -8,8 +8,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import ru.emelkrist.dto.RequestDTO;
+import ru.emelkrist.exceptions.SchedulesApiClientException;
+import ru.emelkrist.exceptions.SchedulesApiServerException;
 import ru.emelkrist.model.Timetable;
 
 import java.util.ArrayList;
@@ -29,12 +32,19 @@ public class YandexTimetableService {
      * @param requestDTO request input data
      * @return list of train timetables
      */
-    public ArrayList<Timetable> getTimetableBetweenTwoStations(RequestDTO requestDTO) {
+    public ArrayList<Timetable> getTimetableBetweenTwoStations(RequestDTO requestDTO, long chatId)
+            throws SchedulesApiServerException, SchedulesApiClientException {
         String urlWithData = fillUrl(requestDTO);
-        ResponseEntity<String> response = sendRequestToGetTimetableBetweenTwoStations(urlWithData);
-        // TODO добавить проверку json на наличие error и выводить пользователю text ошибки в чат
-        ArrayList<Timetable> timetables = generateListOfTimetables(response.getBody());
-        return timetables;
+        ResponseEntity<String> response;
+        try {
+            response = sendRequestToGetTimetableBetweenTwoStations(urlWithData);
+            ArrayList<Timetable> timetables = generateListOfTimetables(response.getBody());
+            return timetables;
+        } catch (HttpClientErrorException e) {
+            throw new SchedulesApiClientException(e.getResponseBodyAsString(), chatId);
+        } catch (HttpServerErrorException e) {
+            throw new SchedulesApiServerException(e.getResponseBodyAsString(), chatId);
+        }
     }
 
     /**
@@ -115,7 +125,7 @@ public class YandexTimetableService {
      * @return response entity with JSON data
      */
     private ResponseEntity<String> sendRequestToGetTimetableBetweenTwoStations(String urlWithData)
-            throws HttpClientErrorException {
+            throws HttpClientErrorException, HttpServerErrorException {
         log.debug("Sending GET request to: " + url);
         RestTemplate restTemplate = new RestTemplate();
         return restTemplate.getForEntity(urlWithData, String.class);

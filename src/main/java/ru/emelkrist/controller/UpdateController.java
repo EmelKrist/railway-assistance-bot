@@ -8,9 +8,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.emelkrist.dto.RequestDTO;
+import ru.emelkrist.exceptions.ExceptionHandler;
 import ru.emelkrist.service.*;
-import ru.emelkrist.service.enums.ChatMessage;
 import ru.emelkrist.service.enums.ChatCommand;
+import ru.emelkrist.service.enums.ChatMessage;
 import ru.emelkrist.utils.MessageUtils;
 
 import static ru.emelkrist.service.enums.ChatMessage.*;
@@ -26,15 +27,17 @@ public class UpdateController {
     private final ResponseService responseService;
     private final AnswerService answerService;
     private final BotLockService botLockService;
+    private final ExceptionHandler exceptionHandler;
 
     @Autowired
-    public UpdateController(YandexEncodingService yandexEncodingService, AppUserService appUserService, RequestService requestService, ResponseService responseService, AnswerService answerService, BotLockService botLockService) {
+    public UpdateController(YandexEncodingService yandexEncodingService, AppUserService appUserService, RequestService requestService, ResponseService responseService, AnswerService answerService, BotLockService botLockService, ExceptionHandler exceptionHandler) {
         this.yandexEncodingService = yandexEncodingService;
         this.appUserService = appUserService;
         this.requestService = requestService;
         this.responseService = responseService;
         this.answerService = answerService;
         this.botLockService = botLockService;
+        this.exceptionHandler = exceptionHandler;
         this.yandexEncodingService.generateMapOfCityCodes();
     }
 
@@ -55,6 +58,7 @@ public class UpdateController {
         answerService.registerUpdateController(this);
         requestService.registerUpdateController(this);
         responseService.registerUpdateController(this);
+        exceptionHandler.registerUpdateController(this);
     }
 
     /**

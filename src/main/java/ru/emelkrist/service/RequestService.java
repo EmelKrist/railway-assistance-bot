@@ -5,6 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.emelkrist.controller.UpdateController;
 import ru.emelkrist.dto.RequestDTO;
+import ru.emelkrist.exceptions.SchedulesApiClientException;
+import ru.emelkrist.exceptions.ExceptionHandler;
+import ru.emelkrist.exceptions.SchedulesApiServerException;
 import ru.emelkrist.model.Request;
 import ru.emelkrist.model.Response;
 import ru.emelkrist.model.Timetable;
@@ -27,14 +30,16 @@ public class RequestService {
     private final ResponseService responseService;
     private final AnswerService answerService;
     private final ModelMapper modelMapper;
+    private final ExceptionHandler exceptionHandler;
 
     @Autowired
-    public RequestService(RequestRepository requestRepository, ModelMapper modelMapper, YandexTimetableService yandexTimetableService, ResponseService responseService, AnswerService answerService) {
+    public RequestService(RequestRepository requestRepository, ModelMapper modelMapper, YandexTimetableService yandexTimetableService, ResponseService responseService, AnswerService answerService, ExceptionHandler exceptionHandler) {
         this.requestRepository = requestRepository;
         this.modelMapper = modelMapper;
         this.yandexTimetableService = yandexTimetableService;
         this.responseService = responseService;
         this.answerService = answerService;
+        this.exceptionHandler = exceptionHandler;
     }
 
     /**
@@ -105,7 +110,21 @@ public class RequestService {
     public void processRequest(RequestDTO requestDTO, long userId, long chatId) {
         requestDTO.setInputting(false);
         updateController.setChatMessageView(chatId, REQUEST_PROCESSING_MESSAGE);
-        ArrayList<Timetable> timetables = yandexTimetableService.getTimetableBetweenTwoStations(requestDTO);
+
+        ArrayList<Timetable> timetables = null;
+        try {
+             timetables = yandexTimetableService.getTimetableBetweenTwoStations(requestDTO, chatId);
+        } catch (SchedulesApiClientException e) {
+            exceptionHandler.handleSchedulesApiClientException(e);
+        } catch (SchedulesApiServerException e) {
+            exceptionHandler.handleSchedulesApiServerException(e);
+        }
+
+        if (timetables == null) {
+            removeRequest(userId);
+            return;
+        }
+
         Request fullRequest = modelMapper.map(requestDTO, Request.class);
         fullRequest.setTelegramUserId(userId);
         if (timetables.isEmpty()) {
