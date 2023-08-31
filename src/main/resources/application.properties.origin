@@ -1,0 +1,22 @@
+# Bot configuration
+bot.name=railway_assistance_bot
+bot.token=
+
+# Data source configuration
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.url=
+spring.datasource.username=
+spring.datasource.password=
+
+# JPA configuration
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.generate-ddl=true
+
+# Yandex Schedules API configuration
+yandex-schedules-api.timetable.between-two-stations.url=https://api.rasp.yandex.net/v3.0/search/?apikey=%s&format=json&from=%s&to=%s&lang=ru_RU&transport_types=train
+yandex-schedules-api.all-stations.url=https://api.rasp.yandex.net/v3.0/stations_list/?apikey=%s&lang=ru_RU&format=json
+yandex-schedules-api.token=
+
+# Scheduler configuration
+cron.cleaner.old-responses=0 0 * * * *
+cron.updater.city-codes=0 0 * * * *
