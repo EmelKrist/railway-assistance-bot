@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
@@ -51,13 +52,13 @@ public class YandexEncodingService {
      * map of city codes.
      */
     public void generateMapOfCityCodes() {
-        cityCodes = new HashMap<>();
         try {
             ResponseEntity<String> response = sendRequestToGetListOfStations();
             log.debug("Parsing JSON data to get the names of all " +
                     "supported cities with their yandex codes");
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode rootNode = objectMapper.readTree(response.getBody());
+            HashMap<String, String> mapOfCityCodes = new HashMap<>();
             // get all countries
             JsonNode countriesNode = rootNode.get("countries");
             if (countriesNode.isArray()) {
@@ -77,7 +78,7 @@ public class YandexEncodingService {
                                     String cityName = settlementNode.get("title").asText();
                                     if (!cityName.isBlank()) {
                                         String yandexCode = settlementNode.get("codes").get("yandex_code").asText();
-                                        cityCodes.put(cityName, yandexCode);
+                                        mapOfCityCodes.put(cityName, yandexCode);
                                     }
                                 }
                             }
@@ -86,7 +87,8 @@ public class YandexEncodingService {
                 }
             }
             log.info("Supported city codes was successfully initialized!");
-        } catch (HttpClientErrorException e) {
+            cityCodes = mapOfCityCodes;
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
             log.error("Sending request was interrupted: " + e.getMessage());
         } catch (IOException e) {
             log.error("Initialization of supported city codes was failed: " + e.getMessage());
@@ -99,7 +101,7 @@ public class YandexEncodingService {
      *
      * @return response entity with JSON data
      */
-    private ResponseEntity<String> sendRequestToGetListOfStations() throws HttpClientErrorException {
+    private ResponseEntity<String> sendRequestToGetListOfStations() throws HttpServerErrorException, HttpClientErrorException {
         log.debug("Sending GET request to: " + url);
         RestTemplate restTemplate = new RestTemplate();
         String urlWithToken = String.format(url, token);
